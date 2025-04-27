@@ -17,7 +17,7 @@ class WallFollowerNav(Node):
         # Publishers
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         self.status_pub = self.create_publisher(String, '/snc_status', 10)
-        self.path_pub = self.create_publisher(Path, '/path_explore', 10)
+        # Removed path publisher
 
         # Subscribers
         self.scan_sub = self.create_subscription(LaserScan, '/scan', self.scan_callback, 10)
@@ -38,10 +38,7 @@ class WallFollowerNav(Node):
         self.prev_error = 0.0
         self.prev_time = self.get_clock().now()
 
-        self.path_msg = Path()
-        self.path_msg.header.frame_id = 'map'
-        self.last_pose = None
-        self.pose_publish_threshold = 0.1  
+        # Removed path initialization
 
         self.started = False
         self.teleop_mode = False
@@ -166,60 +163,7 @@ class WallFollowerNav(Node):
 
         self.perform_pid_wall_following(side_distance)
 
-        self.update_pose_in_map()
-
-   
-    def get_current_pose(self):
-        """Retrieves current robot pose relative to the map"""
-        now = rclpy.time.Time()
-        transform = self.tf_buffer.lookup_transform('odom','base_link',now,timeout=rclpy.duration.Duration(seconds=1.0))
-        x = transform.transform.translation.x
-        y = transform.transform.translation.y
-        z = transform.transform.translation.z
-        orientation = transform.transform.rotation
-
-        return x, y, z, orientation
-
-    def has_moved_enough(self, x, y):
-        """Checks if the robot has moved enough to publish"""
-        if not self.last_pose:
-            return True
-        dx = x - self.last_pose.pose.position.x
-        dy = y - self.last_pose.pose.position.y
-        dist = math.hypot(dx, dy)
-
-        if dist >= self.pose_publish_threshold:
-            return True
-        else:
-            return False
-
-    def publish_new_pose(self, x, y, z, orientation):
-        """Publishes the robot's current pose topic."""
-        pose = PoseStamped()
-        pose.header.stamp = self.get_clock().now().to_msg()
-        pose.header.frame_id = "map"
-        pose.pose.position.x = x
-        pose.pose.position.y = y
-        pose.pose.position.z = z
-        pose.pose.orientation = orientation
-
-        self.path_msg.header.stamp = pose.header.stamp
-        self.path_msg.poses.append(pose)
-        self.path_pub.publish(self.path_msg)
-        self.last_pose = pose
-
-    def update_pose_in_map(self):
-        """Updates the robotpose"""
-        try:
-            x, y, z, orientation = self.get_current_pose()
-
-            if not self.has_moved_enough(x, y):
-                return
-
-            self.publish_new_pose(x, y, z, orientation)
-
-        except Exception as e:
-            self.get_logger().warning(f"[TF2] Transform lookup failed: {e}")
+        # Removed update_pose_in_map() call
 
 
 def main(args=None):
